@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ParticleSystem } from '../systems/ParticleSystem';
 
 const SCENE_BACKGROUND_COLOR = '#020308';
 const MESH_BASIC_MATERIAL_COLOR = '#55e7d9';
@@ -12,7 +13,7 @@ export class UniverseEngine {
     private timer = new THREE.Timer();
 
     private animationFrameId: number | null = null;
-    private testObject: THREE.Mesh;
+    private particleSystem: ParticleSystem;
 
     constructor(private container: HTMLElement) {
         const width = container.clientWidth;
@@ -25,7 +26,8 @@ export class UniverseEngine {
         // Camera
         this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
 
-        this.camera.position.set(0, 0, 35);
+        this.camera.position.set(0, 45, 110);
+        this.camera.lookAt(0, 0, 0);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -48,20 +50,11 @@ export class UniverseEngine {
         this.controls.dampingFactor = 0.05;
 
         this.controls.minDistance = 5;
-        this.controls.maxDistance = 150;
+        this.controls.maxDistance = 250;
 
-        // Temporary test object
-        const geometry = new THREE.IcosahedronGeometry(8, 2);
+        this.particleSystem = new ParticleSystem(15000);
 
-        const material = new THREE.MeshBasicMaterial({
-            color: MESH_BASIC_MATERIAL_COLOR,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.65,
-        });
-
-        this.testObject = new THREE.Mesh(geometry, material);
-        this.scene.add(this.testObject);
+        this.scene.add(this.particleSystem.points);
     }
 
     start() {
@@ -72,13 +65,11 @@ export class UniverseEngine {
         const animate = () => {
             this.animationFrameId = requestAnimationFrame(animate);
 
-            // Update timer once per frame
             this.timer.update();
 
             const delta = this.timer.getDelta();
 
-            this.testObject.rotation.y += delta * 0.12;
-            this.testObject.rotation.x += delta * 0.04;
+            this.particleSystem.update(delta);
 
             this.controls.update();
 
@@ -110,17 +101,9 @@ export class UniverseEngine {
 
         this.controls.dispose();
 
-        this.testObject.geometry.dispose();
+        this.scene.remove(this.particleSystem.points);
+        this.particleSystem.dispose();
 
-        const material = this.testObject.material;
-
-        if (Array.isArray(material)) {
-            material.forEach((item) => item.dispose());
-        } else {
-            material.dispose();
-        }
-
-        this.scene.remove(this.testObject);
         this.renderer.dispose();
         this.renderer.domElement.remove();
     }
