@@ -51,7 +51,7 @@ export class UniverseEngine {
         this.controls.minDistance = 5;
         this.controls.maxDistance = 250;
 
-        this.particleSystem = new ParticleSystem(15000);
+        this.particleSystem = new ParticleSystem();
 
         this.scene.add(this.particleSystem.points);
     }
