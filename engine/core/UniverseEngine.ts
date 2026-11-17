@@ -3,7 +3,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ParticleSystem } from '../systems/ParticleSystem';
 
 const SCENE_BACKGROUND_COLOR = '#020308';
-const MESH_BASIC_MATERIAL_COLOR = '#55e7d9';
 
 export class UniverseEngine {
     private scene: THREE.Scene;
