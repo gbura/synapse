@@ -28,12 +28,8 @@ export class NeuralStructureSystem {
             const samples = curve.getPoints(24);
 
             for (let i = 0; i < samples.length - 1; i++) {
-                const a = samples[i];
-                const b = samples[i + 1];
-
-                if (!a || !b) {
-                    return;
-                }
+                const a = samples[i]!;
+                const b = samples[i + 1]!;
 
                 linePositions.push(a.x, a.y, a.z, b.x, b.y, b.z);
             }
