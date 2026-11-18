@@ -23,7 +23,7 @@ What if exploring knowledge felt less like navigating a list of search results a
 
 **SYNAPSE** is a personal exploration of that question. Its long-term vision is to represent topics as spatial nodes, relationships as connections, and related fields as constellations of ideas. Instead of treating knowledge as isolated pages, SYNAPSE aims to make its structure visible, interactive, and discoverable.
 
-The project currently focuses on the **visual foundation**: a real-time 3D environment, procedural particle fields, and branching neural structures. The semantic knowledge graph and its interactions are the next development milestones—not completed features.
+The project currently focuses on the **visual foundation**: a real-time 3D environment, procedural particle fields, and branching neural structures. The semantic knowledge graph and its interactions are the next development milestones - not completed features.
 
 ## Current preview
 
@@ -170,6 +170,6 @@ SYNAPSE is an **independent project in active development**. APIs, visual langua
 
 <div align="center">
 
-**SYNAPSE — connecting ideas in three dimensions.**
+**SYNAPSE - connecting ideas in three dimensions.**
 
 </div>
