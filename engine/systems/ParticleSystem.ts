@@ -13,8 +13,8 @@ export class ParticleSystem {
     constructor(count: number = DEFAULT_PARTICLE_COUNT) {
         this.geometry = new THREE.BufferGeometry();
 
-        const positions = new Float32Array(count * 3); // 45000
-        const colors = new Float32Array(count * 3); // 45000
+        const positions = new Float32Array(count * 3); // DEFAULT_PARTICLE_COUNT * 3 = 45000
+        const colors = new Float32Array(count * 3); // DEFAULT_PARTICLE_COUNT * 3 = 45000
 
         const innerColor = new THREE.Color(INNER_COLOR);
         const outerColor = new THREE.Color(OUTER_COLOR);

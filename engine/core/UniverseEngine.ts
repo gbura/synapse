@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ParticleSystem } from '../systems/ParticleSystem';
+import { NeuralStructureSystem } from '../systems/NeuralStructureSystem';
 
 const SCENE_BACKGROUND_COLOR = '#020308';
 
@@ -13,6 +14,7 @@ export class UniverseEngine {
 
     private animationFrameId: number | null = null;
     private particleSystem: ParticleSystem;
+    private neuralStructureSystem: NeuralStructureSystem;
 
     constructor(private container: HTMLElement) {
         const width = container.clientWidth;
@@ -52,8 +54,10 @@ export class UniverseEngine {
         this.controls.maxDistance = 250;
 
         this.particleSystem = new ParticleSystem();
-
         this.scene.add(this.particleSystem.points);
+
+        this.neuralStructureSystem = new NeuralStructureSystem();
+        this.scene.add(this.neuralStructureSystem.group);
     }
 
     start() {
@@ -69,6 +73,8 @@ export class UniverseEngine {
             const delta = this.timer.getDelta();
 
             this.particleSystem.update(delta);
+
+            this.neuralStructureSystem.update(delta);
 
             this.controls.update();
 
@@ -102,6 +108,9 @@ export class UniverseEngine {
 
         this.scene.remove(this.particleSystem.points);
         this.particleSystem.dispose();
+
+        this.scene.remove(this.neuralStructureSystem.group);
+        this.neuralStructureSystem.dispose();
 
         this.renderer.dispose();
         this.renderer.domElement.remove();
