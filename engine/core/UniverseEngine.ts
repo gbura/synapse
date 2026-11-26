@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { ParticleSystem } from '../systems/ParticleSystem';
 import { NeuralStructureSystem } from '../systems/NeuralStructureSystem';
+import { KnowledgeGraphSystem } from '../systems/KnowledgeGraphSystem';
+import { knowledgeGraph } from '../../data/knowledgeGraph';
 
 const SCENE_BACKGROUND_COLOR = '#020308';
 
@@ -15,6 +17,7 @@ export class UniverseEngine {
     private animationFrameId: number | null = null;
     private particleSystem: ParticleSystem;
     private neuralStructureSystem: NeuralStructureSystem;
+    private knowledgeGraphSystem: KnowledgeGraphSystem;
 
     constructor(private container: HTMLElement) {
         const width = container.clientWidth;
@@ -60,6 +63,9 @@ export class UniverseEngine {
 
         this.neuralStructureSystem = new NeuralStructureSystem();
         this.scene.add(this.neuralStructureSystem.group);
+
+        this.knowledgeGraphSystem = new KnowledgeGraphSystem(knowledgeGraph);
+        this.scene.add(this.knowledgeGraphSystem.group);
     }
 
     start() {
@@ -75,8 +81,8 @@ export class UniverseEngine {
             const delta = this.timer.getDelta();
 
             this.particleSystem.update(delta);
-
             this.neuralStructureSystem.update(delta);
+            this.knowledgeGraphSystem.update(delta);
 
             this.controls.update();
 
@@ -114,6 +120,9 @@ export class UniverseEngine {
 
         this.scene.remove(this.neuralStructureSystem.group);
         this.neuralStructureSystem.dispose();
+
+        this.scene.remove(this.knowledgeGraphSystem.group);
+        this.knowledgeGraphSystem.dispose();
 
         this.renderer.dispose();
         this.renderer.domElement.remove();
