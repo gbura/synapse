@@ -25,7 +25,9 @@ export class UniverseEngine {
         this.scene.background = new THREE.Color(SCENE_BACKGROUND_COLOR);
 
         // Camera
-        this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 2000);
+        const aspect = width > 0 && height > 0 ? width / height : 1;
+
+        this.camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 2000);
 
         this.camera.position.set(0, 45, 110);
         this.camera.lookAt(0, 0, 0);
@@ -105,6 +107,7 @@ export class UniverseEngine {
         }
 
         this.controls.dispose();
+        this.timer.dispose();
 
         this.scene.remove(this.particleSystem.points);
         this.particleSystem.dispose();
