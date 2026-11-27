@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import type { KnowledgeCategory, KnowledgeGraph } from '../../types/knowledge';
+import type { KnowledgeCategory, KnowledgeGraph, KnowledgeEdge } from '../../types/knowledge';
+import { ForceDirectedLayout } from '../layouts/ForceDirectedLayout';
 
 const CATEGORY_COLORS: Record<KnowledgeCategory, string> = {
     mathematics: '#38bdf8',
@@ -10,12 +11,13 @@ const CATEGORY_COLORS: Record<KnowledgeCategory, string> = {
 };
 
 const EDGE_COLOR = '#8acdd8';
-const GRAPH_RADIUS = 32;
 
 export class KnowledgeGraphSystem {
     readonly group = new THREE.Group();
 
-    private nodePositions = new Map<string, THREE.Vector3>();
+    private layout: ForceDirectedLayout;
+
+    private dummy = new THREE.Object3D();
 
     private nodeGeometry: THREE.SphereGeometry;
     private nodeMaterial: THREE.MeshBasicMaterial;
@@ -24,8 +26,14 @@ export class KnowledgeGraphSystem {
     private edgeGeometry: THREE.BufferGeometry;
     private edgeMaterial: THREE.LineBasicMaterial;
 
+    private validEdges: KnowledgeEdge[];
+
+    private edgePositionAttribute: THREE.BufferAttribute;
+
     constructor(private graph: KnowledgeGraph) {
-        // Node geometry and material
+        this.layout = new ForceDirectedLayout(graph);
+
+        // Nodes
         this.nodeGeometry = new THREE.SphereGeometry(1, 16, 16);
 
         this.nodeMaterial = new THREE.MeshBasicMaterial({
@@ -34,59 +42,33 @@ export class KnowledgeGraphSystem {
 
         this.nodeMesh = new THREE.InstancedMesh(this.nodeGeometry, this.nodeMaterial, this.graph.nodes.length);
 
-        const dummy = new THREE.Object3D();
+        this.nodeMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-        // Generate node instances
         this.graph.nodes.forEach((node, index) => {
-            const angle = (index / this.graph.nodes.length) * Math.PI * 2;
-
-            const position = new THREE.Vector3(
-                Math.cos(angle) * GRAPH_RADIUS,
-                Math.sin(angle * 2) * 10,
-                Math.sin(angle) * GRAPH_RADIUS,
-            );
-
-            this.nodePositions.set(node.id, position);
-
-            const size = 0.6 + node.importance * 1.4;
-
-            dummy.position.copy(position);
-            dummy.scale.setScalar(size);
-            dummy.updateMatrix();
-
-            this.nodeMesh.setMatrixAt(index, dummy.matrix);
-
             this.nodeMesh.setColorAt(index, new THREE.Color(CATEGORY_COLORS[node.category]));
         });
-
-        this.nodeMesh.instanceMatrix.needsUpdate = true;
 
         if (this.nodeMesh.instanceColor) {
             this.nodeMesh.instanceColor.needsUpdate = true;
         }
 
-        this.nodeMesh.computeBoundingSphere();
-
         this.group.add(this.nodeMesh);
 
-        // Generate graph edges
-        const edgePositions: number[] = [];
+        // Edges
+        this.validEdges = this.graph.edges.filter((edge) => {
+            const source = this.layout.getPosition(edge.source);
+            const target = this.layout.getPosition(edge.target);
 
-        for (const edge of this.graph.edges) {
-            const source = this.nodePositions.get(edge.source);
-            const target = this.nodePositions.get(edge.target);
-
-            if (!source || !target) {
-                console.warn('Invalid knowledge edge:', edge);
-                continue;
-            }
-
-            edgePositions.push(source.x, source.y, source.z, target.x, target.y, target.z);
-        }
+            return source !== undefined && target !== undefined;
+        });
 
         this.edgeGeometry = new THREE.BufferGeometry();
 
-        this.edgeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(edgePositions, 3));
+        this.edgePositionAttribute = new THREE.BufferAttribute(new Float32Array(this.validEdges.length * 6), 3);
+
+        this.edgePositionAttribute.setUsage(THREE.DynamicDrawUsage);
+
+        this.edgeGeometry.setAttribute('position', this.edgePositionAttribute);
 
         this.edgeMaterial = new THREE.LineBasicMaterial({
             color: EDGE_COLOR,
@@ -99,13 +81,66 @@ export class KnowledgeGraphSystem {
         const edges = new THREE.LineSegments(this.edgeGeometry, this.edgeMaterial);
 
         this.group.add(edges);
+
+        this.updateNodes();
+        this.updateEdges();
+    }
+
+    private updateNodes() {
+        this.graph.nodes.forEach((node, index) => {
+            const position = this.layout.getPosition(node.id);
+
+            if (!position) {
+                return;
+            }
+
+            const size = 0.6 + node.importance * 1.4;
+
+            this.dummy.position.copy(position);
+            this.dummy.scale.setScalar(size);
+            this.dummy.updateMatrix();
+
+            this.nodeMesh.setMatrixAt(index, this.dummy.matrix);
+        });
+
+        this.nodeMesh.instanceMatrix.needsUpdate = true;
+
+        this.nodeMesh.computeBoundingSphere();
+    }
+
+    private updateEdges() {
+        this.validEdges.forEach((edge, index) => {
+            const source = this.layout.getPosition(edge.source);
+            const target = this.layout.getPosition(edge.target);
+
+            if (!source || !target) {
+                return;
+            }
+
+            const vertexIndex = index * 2;
+
+            this.edgePositionAttribute.setXYZ(vertexIndex, source.x, source.y, source.z);
+
+            this.edgePositionAttribute.setXYZ(vertexIndex + 1, target.x, target.y, target.z);
+        });
+
+        this.edgePositionAttribute.needsUpdate = true;
+
+        this.edgeGeometry.computeBoundingSphere();
     }
 
     update(delta: number) {
+        this.layout.update(delta);
+
+        this.updateNodes();
+        this.updateEdges();
+
         this.group.rotation.y += delta * 0.012;
     }
 
     dispose() {
+        this.layout.dispose();
+
         this.nodeMesh.dispose();
 
         this.nodeGeometry.dispose();
@@ -114,7 +149,6 @@ export class KnowledgeGraphSystem {
         this.edgeGeometry.dispose();
         this.edgeMaterial.dispose();
 
-        this.nodePositions.clear();
         this.group.clear();
     }
 }
